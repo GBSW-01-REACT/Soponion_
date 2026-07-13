@@ -1,0 +1,13 @@
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
+import { ToastProvider } from './components/ui/Toast'
+import { Navbar } from './components/layout/Navbar'
+import { Footer } from './components/layout/Footer'
+import { ProtectedRoute } from './components/layout/ProtectedRoute'
+import { HomePage } from './pages/HomePage'
+import { LoginPage, SignupPage } from './pages/AuthPages'
+import { SongsPage, SongDetailPage, SongEditorPage } from './pages/SongPages'
+import { ReviewEditorPage } from './pages/ReviewPages'
+import { ProfilePage } from './pages/ProfilePage'
+import { NotFoundPage } from './pages/NotFoundPage'
+export default function App() { return <BrowserRouter><AuthProvider><ToastProvider><a href="#main" className="sr-only focus:not-sr-only">본문으로 건너뛰기</a><Navbar/><div id="main"><Routes><Route path="/" element={<HomePage/>}/><Route path="/login" element={<LoginPage/>}/><Route path="/signup" element={<SignupPage/>}/><Route path="/profile/:id?" element={<ProfilePage/>}/><Route path="/songs" element={<SongsPage/>}/><Route path="/songs/:id" element={<SongDetailPage/>}/><Route path="/songs/new" element={<ProtectedRoute><SongEditorPage/></ProtectedRoute>}/><Route path="/songs/:id/edit" element={<ProtectedRoute><SongEditorPage edit/></ProtectedRoute>}/><Route path="/songs/:songId/reviews/new" element={<ProtectedRoute><ReviewEditorPage/></ProtectedRoute>}/><Route path="/reviews/:id/edit" element={<ProtectedRoute><ReviewEditorPage edit/></ProtectedRoute>}/><Route path="*" element={<NotFoundPage/>}/></Routes></div><Footer/></ToastProvider></AuthProvider></BrowserRouter> }

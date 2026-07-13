@@ -1,0 +1,5 @@
+import { createContext, useEffect, useMemo, useState } from 'react'
+import { supabase } from '../lib/supabase/client'
+import { getProfile } from '../services/profiles'
+export const AuthContext = createContext(null)
+export function AuthProvider({ children }) { const [session, setSession] = useState(null); const [profile, setProfile] = useState(null); const [loading, setLoading] = useState(true); useEffect(() => { if (!supabase) { setLoading(false); return undefined } const load = async (nextSession) => { setSession(nextSession); setProfile(nextSession?.user ? (await getProfile(nextSession.user.id)).data : null); setLoading(false) }; supabase.auth.getSession().then(({ data }) => load(data.session)); const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => { load(nextSession) }); return () => listener.subscription.unsubscribe() }, []); const value = useMemo(() => ({ session, user: session?.user ?? null, profile, loading, refreshProfile: async () => { if (session?.user) setProfile((await getProfile(session.user.id)).data) } }), [session, profile, loading]); return <AuthContext.Provider value={value}>{children}</AuthContext.Provider> }

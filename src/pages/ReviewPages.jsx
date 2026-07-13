@@ -1,0 +1,7 @@
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { createReview, getReview, updateReview } from '../services/reviews'
+import { ReviewForm } from '../components/review/ReviewForm'
+import { useToast } from '../components/ui/Toast'
+export function ReviewEditorPage({ edit = false }) { const { id, songId } = useParams(); const { user } = useAuth(); const navigate = useNavigate(); const toast = useToast(); const [review, setReview] = useState(null); const [busy, setBusy] = useState(false); useEffect(() => { if (edit) getReview(id).then(({ data, error }) => { if (error) toast('리뷰 정보를 불러오지 못했습니다.', 'error'); else setReview(data) }) }, [edit, id]); if (edit && !review) return <main className="page-shell py-16 text-center text-slate-500">리뷰를 불러오는 중입니다.</main>; const submit = async (form) => { setBusy(true); const { error } = edit ? await updateReview(id, form) : await createReview({ ...form, song_id: Number(songId), user_id: user.id }); setBusy(false); if (error) return toast(error.code === '23505' ? '이 음악에는 이미 리뷰를 작성했어요.' : error.message, 'error'); toast(edit ? '리뷰를 수정했습니다.' : '리뷰를 등록했습니다.'); navigate(`/songs/${edit ? review.song_id : songId}`) }; return <main className="page-shell max-w-2xl py-10"><h1 className="section-title">{edit ? '리뷰 수정' : '리뷰 작성'}</h1><p className="mt-2 text-sm text-slate-600">좋았던 점과 아쉬웠던 점을 구체적으로 남겨보세요.</p><div className="surface mt-6 p-5 sm:p-7"><ReviewForm initial={review || {}} onSubmit={submit} submitting={busy}/></div></main> }
