@@ -3,7 +3,7 @@
 insert into public.genres (name)
 values
   ('POP'),
-  ('DnB'),
+  ('DNB'),
   ('EDM'),
   ('House'),
   ('Techno'),

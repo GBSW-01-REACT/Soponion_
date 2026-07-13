@@ -14,7 +14,7 @@ export function SongForm({ initial = {}, onSubmit, submitting }) {
   const [form, setForm] = useState({ title: initial.title || '', artist_id: initial.artist_id || '', genre_id: initial.genre_id || '', album_name: initial.album_name || '', album_image_url: initial.album_image_url || '', release_date: initial.release_date || '', youtube_url: initial.youtube_url || '' })
 
   useEffect(() => {
-    Promise.all([listGenres(), listArtists()]).then(([genreResult, artistResult]) => {
+    Promise.all([listGenres({ ensureDefaults: true }), listArtists()]).then(([genreResult, artistResult]) => {
       setGenres(genreResult.data || [])
       setArtists(artistResult.data || [])
       setArtistLoading(false)
