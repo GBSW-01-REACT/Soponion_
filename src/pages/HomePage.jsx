@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, ChevronLeft, ChevronRight, Clock3, Music2, Plus, Search, Star } from 'lucide-react'
-import { getSongArtistNames, listSongs } from '../services/songs'
+import { useAuth } from '../hooks/useAuth'
+import { getSongArtistNames, getUserCommentGenreCounts, listSongs } from '../services/songs'
 import { SongCard } from '../components/song/SongCard'
 
 const getSongStat = (song) => {
@@ -12,30 +13,56 @@ const getSongStat = (song) => {
   }
 }
 
+const getDateTime = (value) => {
+  const time = new Date(value || 0).getTime()
+  return Number.isFinite(time) ? time : 0
+}
+
+const getReleaseTime = (song) => getDateTime(song.release_date) || getDateTime(song.created_at)
+
 export function HomePage() {
+  const { user } = useAuth()
   const [songs, setSongs] = useState([])
+  const [genrePreferences, setGenrePreferences] = useState([])
   const [loading, setLoading] = useState(true)
   const carouselRef = useRef(null)
   const [carouselState, setCarouselState] = useState({ canPrev: false, canNext: false })
 
   useEffect(() => {
-    listSongs().then(({ data }) => {
-      setSongs(data || [])
+    let cancelled = false
+
+    const loadHome = async () => {
+      setLoading(true)
+      const [songResult, preferenceResult] = await Promise.all([
+        listSongs(),
+        user ? getUserCommentGenreCounts(user.id) : Promise.resolve({ data: [], error: null }),
+      ])
+
+      if (cancelled) return
+      setSongs(songResult.data || [])
+      setGenrePreferences(preferenceResult.error ? [] : preferenceResult.data || [])
       setLoading(false)
-    })
-  }, [])
+    }
+
+    loadHome()
+    return () => { cancelled = true }
+  }, [user?.id])
 
   const featured = songs.slice(0, 12)
+  const genreWeightById = new Map(genrePreferences.map(({ genreId, count }) => [genreId, count]))
+  const hasGenrePreferences = genreWeightById.size > 0
   const recommendedSongs = [...songs]
     .sort((a, b) => {
+      const genreDifference = (genreWeightById.get(b.genre_id) || 0) - (genreWeightById.get(a.genre_id) || 0)
+      if (genreDifference) return genreDifference
       const left = getSongStat(a)
       const right = getSongStat(b)
       if (right.score !== left.score) return right.score - left.score
       if (right.reviewCount !== left.reviewCount) return right.reviewCount - left.reviewCount
-      return new Date(b.created_at || 0) - new Date(a.created_at || 0)
+      return getReleaseTime(b) - getReleaseTime(a)
     })
     .slice(0, 4)
-  const latestSongs = songs.slice(0, 4)
+  const latestSongs = [...songs].sort((a, b) => getReleaseTime(b) - getReleaseTime(a)).slice(0, 4)
   const spotlight = recommendedSongs[0] || featured[0]
   const updateCarouselState = () => {
     const carousel = carouselRef.current
@@ -65,21 +92,24 @@ export function HomePage() {
     window.setTimeout(updateCarouselState, 320)
   }
 
-  return <main className="page-shell pb-16 pt-8 sm:pt-14">
-    <section className="border-y border-[var(--text)] py-10 sm:py-14">
-      <div className="max-w-4xl">
-        <p className="eyebrow text-[#6d7f70]">MUSIC NOTES · SOPONION</p>
-        <h1 className="mt-4 text-4xl font-extrabold leading-[1.08] tracking-[-0.085em] text-[var(--text)] sm:text-6xl lg:text-7xl">오늘 들을 음악을<br/>빠르게 골라보세요.</h1>
-        <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--text-soft)]">평점이 좋은 추천 음악과 방금 등록된 최신 음악을 한 화면에서 확인할 수 있어요.</p>
+  return <main className="page-shell overflow-x-hidden pb-12 pt-5 sm:pt-10">
+    <section className="border-y border-[var(--border)] py-6 sm:py-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow text-[#6d7f70]">PERSONAL MUSIC MIX</p>
+          <h1 className="mt-1 text-2xl font-extrabold tracking-[-0.065em] text-[var(--text)] sm:text-4xl">추천과 최신 음악</h1>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-soft)]">댓글로 남긴 취향과 발매일을 기준으로 골라드려요.</p>
+        </div>
+        <Link className="inline-flex min-h-11 w-fit items-center gap-1 rounded-xl border border-[var(--border)] px-4 text-sm font-extrabold text-[var(--text)] transition hover:border-[#f07822] hover:text-[#f07822]" to="/songs">음악 전체 보기 <ArrowUpRight size={16}/></Link>
       </div>
 
-      {loading ? <p className="muted py-16 text-center">음악을 불러오는 중입니다.</p> : songs.length ? <div className="mt-10 grid gap-4 lg:grid-cols-2">
-        <MusicShowcase title="추천 음악" eyebrow="TOP RATED" icon={<Star size={18} className="fill-current"/>} songs={recommendedSongs} emptyText="아직 추천할 음악이 없어요."/>
-        <MusicShowcase title="최신 음악" eyebrow="JUST ADDED" icon={<Clock3 size={18}/>} songs={latestSongs} emptyText="아직 최신 음악이 없어요."/>
+      {loading ? <p className="muted py-14 text-center">음악을 불러오는 중입니다.</p> : songs.length ? <div className="mt-5 grid gap-3 lg:grid-cols-2 lg:gap-4">
+        <MusicShowcase title={hasGenrePreferences ? '취향 추천 음악' : '추천 음악'} eyebrow={hasGenrePreferences ? 'BASED ON YOUR COMMENTS' : 'TOP RATED'} description={hasGenrePreferences ? '댓글을 많이 남긴 장르를 먼저 보여드려요.' : '댓글 취향이 쌓이면 더 맞춤으로 추천해드려요.'} icon={<Star size={18} className="fill-current"/>} songs={recommendedSongs} emptyText="아직 추천할 음악이 없어요."/>
+        <MusicShowcase title="최신 음악" eyebrow="NEW RELEASES" description="발매일이 가장 최근인 순서예요." icon={<Clock3 size={18}/>} songs={latestSongs} emptyText="아직 최신 음악이 없어요."/>
       </div> : <EmptyMusic/>}
     </section>
 
-    <section className="grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_330px]">
+    <section className="grid gap-6 py-8 lg:grid-cols-[minmax(0,1fr)_330px] lg:gap-10 lg:py-10">
       <div>
         <div className="mb-5 flex items-end justify-between gap-3 border-b border-[var(--border)] pb-4">
           <div>
@@ -94,8 +124,8 @@ export function HomePage() {
             <ChevronLeft size={22}/>
           </button>
           <div ref={carouselRef} onScroll={updateCarouselState} aria-label="새로 등록된 음악 가로 목록" className="-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {featured.map((song) => <div key={song.id} className="w-[72vw] max-w-[320px] shrink-0 snap-start sm:w-[230px] lg:w-[210px] xl:w-[225px]"><SongCard song={song}/></div>)}
-            <Link to="/songs" className="flex min-h-[330px] w-[72vw] max-w-[320px] shrink-0 snap-start flex-col justify-between rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-5 transition hover:border-[#f07822] hover:bg-[var(--surface-hover)] sm:w-[230px] lg:w-[210px] xl:w-[225px]">
+            {featured.map((song) => <div key={song.id} className="w-[68vw] max-w-[280px] shrink-0 snap-start sm:w-[230px] lg:w-[210px] xl:w-[225px]"><SongCard song={song}/></div>)}
+            <Link to="/songs" className="flex min-h-[300px] w-[68vw] max-w-[280px] shrink-0 snap-start flex-col justify-between rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-5 transition hover:border-[#f07822] hover:bg-[var(--surface-hover)] sm:w-[230px] lg:w-[210px] xl:w-[225px]">
               <span>
                 <span className="eyebrow text-[#6d7f70]">MORE MUSIC</span>
                 <span className="mt-3 block text-2xl font-extrabold leading-tight tracking-[-0.055em] text-[var(--text)]">더 많은 음악을<br/>둘러보세요.</span>
@@ -136,15 +166,16 @@ export function HomePage() {
   </main>
 }
 
-function MusicShowcase({ title, eyebrow, icon, songs, emptyText }) {
+function MusicShowcase({ title, eyebrow, description, icon, songs, emptyText }) {
   const mainSong = songs[0]
   const subSongs = songs.slice(1, 4)
 
-  return <section className="rounded-[2rem] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm sm:p-5">
+  return <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-sm sm:p-5">
     <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] pb-4">
       <div>
         <p className="eyebrow text-[#6d7f70]">{eyebrow}</p>
-        <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.055em] text-[var(--text)]">{title}</h2>
+        <h2 className="mt-1 text-xl font-extrabold tracking-[-0.055em] text-[var(--text)] sm:text-2xl">{title}</h2>
+        <p className="mt-1 text-xs text-[var(--text-soft)]">{description}</p>
       </div>
       <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[#fff0e5] text-[#f07822]">{icon}</span>
     </div>
@@ -159,17 +190,17 @@ function MusicShowcase({ title, eyebrow, icon, songs, emptyText }) {
 function FeaturedMusicLink({ song }) {
   const { score, reviewCount } = getSongStat(song)
 
-  return <Link to={`/songs/${song.id}`} className="group grid gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)] p-3 transition hover:border-[#f07822] hover:bg-[var(--surface-hover)] sm:grid-cols-[150px_minmax(0,1fr)]">
+  return <Link to={`/songs/${song.id}`} className="group grid grid-cols-[96px_minmax(0,1fr)] gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)] p-3 transition hover:border-[#f07822] hover:bg-[var(--surface-hover)] sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-4">
     <div className="aspect-square overflow-hidden rounded-xl bg-[#282e2f]">
       {song.album_image_url ? <img src={song.album_image_url} alt={`${song.title} 앨범 표지`} className="size-full object-cover transition duration-300 group-hover:scale-[1.035]" loading="lazy"/> : <div className="grid size-full place-items-center text-[#8e9798]"><Music2 size={36}/></div>}
     </div>
     <div className="flex min-w-0 flex-col justify-between">
       <div>
         <p className="eyebrow text-[#6d7f70]">{song.genres?.name || '장르 미정'}</p>
-        <h3 className="mt-2 line-clamp-2 text-2xl font-extrabold leading-tight tracking-[-0.06em] text-[var(--text)]">{song.title}</h3>
-        <p className="mt-2 line-clamp-1 text-sm text-[var(--text-soft)]">{getSongArtistNames(song)}</p>
+        <h3 className="mt-1 line-clamp-2 text-lg font-extrabold leading-tight tracking-[-0.06em] text-[var(--text)] sm:mt-2 sm:text-2xl">{song.title}</h3>
+        <p className="mt-1 line-clamp-1 text-sm text-[var(--text-soft)] sm:mt-2">{getSongArtistNames(song)}</p>
       </div>
-      <p className="mt-4 flex items-center gap-1 text-sm font-bold text-[var(--text)]"><Star size={16} className="fill-[#25e39a] text-[#25e39a]"/>{score.toFixed(1)}<span className="text-[var(--text-muted)]">리뷰 {reviewCount}</span></p>
+      <p className="mt-2 flex items-center gap-1 text-sm font-bold text-[var(--text)] sm:mt-4"><Star size={16} className="fill-[#25e39a] text-[#25e39a]"/>{score.toFixed(1)}<span className="text-[var(--text-muted)]">리뷰 {reviewCount}</span></p>
     </div>
   </Link>
 }

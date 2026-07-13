@@ -111,6 +111,56 @@ export const listSongs = async ({ query = '', genreId = '', artistId = '' } = {}
   return { data: error ? null : await hydrateSongs(data), error }
 }
 
+export const getUserCommentGenreCounts = async (userId) => {
+  if (!userId) return { data: [], error: null }
+
+  const { data: comments, error: commentsError } = await supabase
+    .from('comments')
+    .select('review_id')
+    .eq('user_id', userId)
+    .not('review_id', 'is', null)
+
+  if (commentsError) return { data: [], error: commentsError }
+
+  const reviewIds = [...new Set((comments || []).map((comment) => comment.review_id).filter(Boolean))]
+  if (!reviewIds.length) return { data: [], error: null }
+
+  const { data: reviews, error: reviewsError } = await supabase
+    .from('reviews')
+    .select('id,song_id')
+    .in('id', reviewIds)
+
+  if (reviewsError) return { data: [], error: reviewsError }
+
+  const songIds = [...new Set((reviews || []).map((review) => review.song_id).filter(Boolean))]
+  if (!songIds.length) return { data: [], error: null }
+
+  const { data: commentSongs, error: songsError } = await supabase
+    .from('songs')
+    .select('id,genre_id')
+    .in('id', songIds)
+
+  if (songsError) return { data: [], error: songsError }
+
+  const reviewSongById = new Map((reviews || []).map((review) => [review.id, review.song_id]))
+  const genreBySongId = new Map((commentSongs || []).map((song) => [song.id, song.genre_id]))
+  const genreCounts = new Map()
+
+  ;(comments || []).forEach((comment) => {
+    const songId = reviewSongById.get(comment.review_id)
+    const genreId = genreBySongId.get(songId)
+    if (!genreId) return
+    genreCounts.set(genreId, (genreCounts.get(genreId) || 0) + 1)
+  })
+
+  return {
+    data: [...genreCounts.entries()]
+      .map(([genreId, count]) => ({ genreId, count }))
+      .sort((left, right) => right.count - left.count),
+    error: null,
+  }
+}
+
 export const getSong = async (id) => {
   const { data, error } = await selectSongs((select) => supabase.from('songs').select(select).eq('id', id).single())
   if (error) return { data: null, error }
