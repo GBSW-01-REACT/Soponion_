@@ -1,8 +1,9 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { LogOut, Moon, Music2, Settings2, Sun, UserRound } from 'lucide-react'
+import { LogOut, Moon, Music2, Settings2, Sun } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Button } from '../ui/Button'
+import { Avatar } from '../ui/Avatar'
 
 export function Navbar() {
   const { user, profile, signOut } = useAuth()
@@ -28,7 +29,7 @@ export function Navbar() {
         <button className="theme-icon-button" type="button" onClick={toggleTheme} aria-label={theme === 'dark' ? '화이트 모드로 변경' : '블랙 모드로 변경'} aria-pressed={theme === 'dark'} title={theme === 'dark' ? '화이트 모드' : '블랙 모드'}>{theme === 'dark' ? <Sun size={18}/> : <Moon size={18}/>}</button>
         {user ? <>
           <Link aria-label="계정 설정" className="grid size-10 place-items-center rounded-xl text-[#d7dddc] hover:bg-[#252a2b] hover:text-white sm:hidden" to="/profile"><Settings2 size={18}/></Link>
-          <Link aria-label="내 계정 설정" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-bold text-[#d7dddc] hover:bg-[#252a2b] hover:text-white" to="/profile"><UserRound size={17}/><span className="hidden md:inline">{profile?.nickname || '계정 설정'}</span></Link>
+          <Link aria-label="내 계정 설정" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-bold text-[#d7dddc] hover:bg-[#252a2b] hover:text-white" to="/profile"><Avatar size="sm" name={profile?.nickname || user.email?.split('@')[0] || '사용자'} src={profile?.profile_image_url}/><span className="hidden md:inline">{profile?.nickname || '계정 설정'}</span></Link>
           <button aria-label="로그아웃" onClick={logout} className="grid size-10 place-items-center rounded-xl text-[#9aa0a1] hover:bg-[#252a2b] hover:text-white"><LogOut size={17}/></button>
         </> : <>
           <Link className="hidden sm:block" to="/login"><Button variant="ghost">로그인</Button></Link>

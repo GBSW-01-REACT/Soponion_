@@ -5,6 +5,7 @@ import { createComment, deleteComment, listComments, updateComment } from '../..
 import { Button } from '../ui/Button'
 import { Textarea } from '../ui/Textarea'
 import { useToast } from '../ui/Toast'
+import { Avatar } from '../ui/Avatar'
 
 export function CommentList({ reviewId }) {
   const { user } = useAuth()
@@ -67,5 +68,5 @@ function CommentComposer({ inputRef, content, setContent, replyTo, onCancel, onS
 }
 
 function CommentItem({ comment, own, reply, onReply, onEdit, onDelete }) {
-  return <article className={`border-b border-[#303637] py-3 text-sm ${reply ? 'ml-5 rounded-r-xl border-l-2 border-l-[#7d44e5] bg-[#171b1c] px-3' : ''}`}><div className="flex justify-between gap-2"><span className="font-bold text-[#f5f6f4]">{comment.profiles?.nickname || '사용자'}</span><div className="flex items-center gap-1">{!reply && <button type="button" aria-label="대댓글 작성" onClick={onReply} className="inline-flex min-h-9 items-center gap-1 px-1 text-xs font-bold text-[#aeb4b5] hover:text-white"><Reply size={15}/>답글</button>}{own && <><button type="button" aria-label="댓글 수정" onClick={onEdit} className="grid size-9 place-items-center text-[#aeb4b5] hover:text-white"><Pencil size={15}/></button><button type="button" aria-label="댓글 삭제" onClick={onDelete} className="grid size-9 place-items-center text-[#ec8b94] hover:text-[#ffc5ca]"><Trash2 size={15}/></button></>}</div></div><p className="mt-2 whitespace-pre-wrap leading-6 text-[#c1c8c7]">{comment.content}</p>{reply && <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold tracking-[0.12em] text-[#a778ff]"><Check size={13}/>답글</p>}</article>
+  return <article className={`border-b border-[#303637] py-3 text-sm ${reply ? 'ml-5 rounded-r-xl border-l-2 border-l-[#7d44e5] bg-[#171b1c] px-3' : ''}`}><div className="flex justify-between gap-2"><div className="flex min-w-0 items-center gap-2"><Avatar size="sm" name={comment.profiles?.nickname || '사용자'} src={comment.profiles?.profile_image_url}/><span className="truncate font-bold text-[#f5f6f4]">{comment.profiles?.nickname || '사용자'}</span></div><div className="flex items-center gap-1">{!reply && <button type="button" aria-label="대댓글 작성" onClick={onReply} className="inline-flex min-h-9 items-center gap-1 px-1 text-xs font-bold text-[#aeb4b5] hover:text-white"><Reply size={15}/>답글</button>}{own && <><button type="button" aria-label="댓글 수정" onClick={onEdit} className="grid size-9 place-items-center text-[#aeb4b5] hover:text-white"><Pencil size={15}/></button><button type="button" aria-label="댓글 삭제" onClick={onDelete} className="grid size-9 place-items-center text-[#ec8b94] hover:text-[#ffc5ca]"><Trash2 size={15}/></button></>}</div></div><p className="mt-2 whitespace-pre-wrap leading-6 text-[#c1c8c7]">{comment.content}</p>{reply && <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold tracking-[0.12em] text-[#a778ff]"><Check size={13}/>답글</p>}</article>
 }
