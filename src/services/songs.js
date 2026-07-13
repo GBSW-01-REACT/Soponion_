@@ -8,4 +8,5 @@ export const updateSong = async (id, payload) => supabase.from('songs').update(p
 export const deleteSong = async (id) => supabase.from('songs').delete().eq('id', id)
 export const listGenres = async () => supabase.from('genres').select('*').order('name')
 export const listArtists = async () => supabase.from('artists').select('*').order('name')
-export const createArtist = async (name) => supabase.from('artists').insert({ name }).select().single()
+export const findArtistByName = async (name) => supabase.from('artists').select('*').ilike('name', name.trim()).limit(1).maybeSingle()
+export const getOrCreateArtist = async (name) => { const normalizedName = name.trim(); if (!normalizedName) return { data: null, error: new Error('아티스트 이름을 입력해주세요.') }; if (normalizedName.length > 80) return { data: null, error: new Error('아티스트 이름은 80자 이하로 입력해주세요.') }; const existing = await findArtistByName(normalizedName); if (existing.error) return existing; if (existing.data) return existing; return supabase.from('artists').insert({ name: normalizedName }).select().single() }
