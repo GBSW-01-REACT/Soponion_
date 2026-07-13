@@ -1,1 +1,1 @@
-export function Footer() { return <footer className="mt-16 border-t bg-white"><div className="page-shell py-8 text-sm text-slate-500">좋아하는 음악을 발견하고, 솔직한 감상을 나누세요.</div></footer> }
+export function Footer() { return <footer className="mt-20 border-t border-[#dedcd6]"><div className="page-shell flex flex-wrap items-center justify-between gap-2 py-8 text-sm text-[#6e746c]"><span>좋아하는 음악을 발견하고, 솔직한 감상을 나누세요.</span><span className="font-semibold tracking-[-0.03em] text-[#3b463c]">soponion</span></div></footer> }
