@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, Music2, Plus, Search, Star } from 'lucide-react'
+import { ArrowUpRight, ChevronLeft, ChevronRight, Music2, Plus, Search, Star } from 'lucide-react'
 import { getSongArtistNames, listSongs } from '../services/songs'
 import { useAuth } from '../hooks/useAuth'
 import { SongCard } from '../components/song/SongCard'
@@ -9,6 +9,8 @@ export function HomePage() {
   const { user, profile } = useAuth()
   const [songs, setSongs] = useState([])
   const [loading, setLoading] = useState(true)
+  const carouselRef = useRef(null)
+  const [carouselState, setCarouselState] = useState({ canPrev: false, canNext: false })
 
   useEffect(() => {
     listSongs().then(({ data }) => {
@@ -17,8 +19,35 @@ export function HomePage() {
     })
   }, [])
 
-  const featured = songs.slice(0, 6)
+  const featured = songs.slice(0, 12)
   const spotlight = featured[0]
+  const updateCarouselState = () => {
+    const carousel = carouselRef.current
+    if (!carousel) return
+    const maxScrollLeft = carousel.scrollWidth - carousel.clientWidth
+    const edgeOffset = 20
+    setCarouselState({
+      canPrev: carousel.scrollLeft > edgeOffset,
+      canNext: carousel.scrollLeft < maxScrollLeft - edgeOffset,
+    })
+  }
+
+  useEffect(() => {
+    updateCarouselState()
+  }, [songs, loading])
+
+  useEffect(() => {
+    window.addEventListener('resize', updateCarouselState)
+    return () => window.removeEventListener('resize', updateCarouselState)
+  }, [])
+
+  const moveCarousel = (direction) => {
+    const carousel = carouselRef.current
+    if (!carousel) return
+    const distance = Math.max(carousel.clientWidth * 0.78, 260)
+    carousel.scrollBy({ left: direction * distance, behavior: 'smooth' })
+    window.setTimeout(updateCarouselState, 320)
+  }
 
   return <main className="page-shell pb-16 pt-8 sm:pt-14">
     <section className="border-y border-[var(--text)] py-10 sm:py-14">
@@ -55,7 +84,24 @@ export function HomePage() {
           <Link className="inline-flex items-center gap-1 text-sm font-bold text-[var(--text-soft)] hover:text-[#f07822]" to="/songs">전체 보기 <ArrowUpRight size={16}/></Link>
         </div>
 
-        {loading ? <p className="muted py-16 text-center">음악을 불러오는 중입니다.</p> : featured.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">{featured.map((song) => <SongCard key={song.id} song={song}/>)}</div> : <EmptyMusic/>}
+        {loading ? <p className="muted py-16 text-center">음악을 불러오는 중입니다.</p> : featured.length ? <div className="relative">
+          <button type="button" aria-label="이전 음악 보기" disabled={!carouselState.canPrev} onClick={() => moveCarousel(-1)} className="absolute left-2 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-[var(--border)] bg-[var(--surface)]/95 text-[var(--text)] shadow-lg backdrop-blur transition hover:bg-[var(--surface-hover)] disabled:pointer-events-none disabled:opacity-0">
+            <ChevronLeft size={22}/>
+          </button>
+          <div ref={carouselRef} onScroll={updateCarouselState} aria-label="새로 등록된 음악 가로 목록" className="-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {featured.map((song) => <div key={song.id} className="w-[72vw] max-w-[320px] shrink-0 snap-start sm:w-[230px] lg:w-[210px] xl:w-[225px]"><SongCard song={song}/></div>)}
+            <Link to="/songs" className="flex min-h-[330px] w-[72vw] max-w-[320px] shrink-0 snap-start flex-col justify-between rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-5 transition hover:border-[#f07822] hover:bg-[var(--surface-hover)] sm:w-[230px] lg:w-[210px] xl:w-[225px]">
+              <span>
+                <span className="eyebrow text-[#6d7f70]">MORE MUSIC</span>
+                <span className="mt-3 block text-2xl font-extrabold leading-tight tracking-[-0.055em] text-[var(--text)]">더 많은 음악을<br/>둘러보세요.</span>
+              </span>
+              <span className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#f07822] px-4 text-sm font-extrabold text-white">전체 보기 <ArrowUpRight size={17}/></span>
+            </Link>
+          </div>
+          <button type="button" aria-label="다음 음악 보기" disabled={!carouselState.canNext} onClick={() => moveCarousel(1)} className="absolute right-2 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-[var(--border)] bg-[var(--surface)]/95 text-[var(--text)] shadow-lg backdrop-blur transition hover:bg-[var(--surface-hover)] disabled:pointer-events-none disabled:opacity-0">
+            <ChevronRight size={22}/>
+          </button>
+        </div> : <EmptyMusic/>}
       </div>
 
       <aside className="space-y-4">
