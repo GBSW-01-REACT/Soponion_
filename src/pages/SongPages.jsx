@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ChevronRight, Music2, Pencil, PlusCircle, Star, Trash2 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useDebounce } from '../hooks/useDebounce'
-import { createSong, deleteSong, getSong, listArtists, listGenres, listSongs, updateSong } from '../services/songs'
+import { createSong, deleteSong, getSong, getSongArtistNames, listGenres, listSongs, searchArtists, updateSong } from '../services/songs'
 import { listReviews } from '../services/reviews'
 import { getYoutubeEmbedUrl } from '../lib/utils'
 import { SongCard } from '../components/song/SongCard'
@@ -16,14 +16,41 @@ import { useToast } from '../components/ui/Toast'
 export function SongsPage() {
   const [songs, setSongs] = useState([])
   const [genres, setGenres] = useState([])
-  const [artists, setArtists] = useState([])
+  const [artistQuery, setArtistQuery] = useState('')
+  const [artistResults, setArtistResults] = useState([])
+  const [artistLoading, setArtistLoading] = useState(false)
   const [filters, setFilters] = useState({ query: '', genreId: '', artistId: '' })
   const query = useDebounce(filters.query)
+  const debouncedArtistQuery = useDebounce(artistQuery)
   const [loading, setLoading] = useState(true)
   const load = async () => { setLoading(true); const { data } = await listSongs({ ...filters, query }); setSongs(data || []); setLoading(false) }
-  useEffect(() => { Promise.all([listGenres(), listArtists()]).then(([g, a]) => { setGenres(g.data || []); setArtists(a.data || []) }) }, [])
+  useEffect(() => { listGenres().then((g) => setGenres(g.data || [])) }, [])
   useEffect(() => { load() }, [query, filters.genreId, filters.artistId])
-  return <main className="page-shell py-8 sm:py-10"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow">MUSIC LIBRARY</p><h1 className="section-title mt-1">음악 탐색</h1></div><Link to="/songs/new"><Button><PlusCircle size={17} className="mr-1"/>음악 등록</Button></Link></div><div className="surface mt-6 grid gap-3 p-3 sm:grid-cols-3"><Input value={filters.query} onChange={(event) => setFilters({ ...filters, query: event.target.value })} placeholder="제목으로 검색"/><select aria-label="장르 필터" value={filters.genreId} onChange={(event) => setFilters({ ...filters, genreId: event.target.value })} className="min-h-11 rounded-xl border border-[#3a4244] bg-[#1b1f20] px-3 text-sm text-[#f5f6f4]"><option value="">전체 장르</option>{genres.map((genre) => <option key={genre.id} value={genre.id}>{genre.name}</option>)}</select><select aria-label="아티스트 필터" value={filters.artistId} onChange={(event) => setFilters({ ...filters, artistId: event.target.value })} className="min-h-11 rounded-xl border border-[#3a4244] bg-[#1b1f20] px-3 text-sm text-[#f5f6f4]"><option value="">전체 아티스트</option>{artists.map((artist) => <option key={artist.id} value={artist.id}>{artist.name}</option>)}</select></div>{loading ? <p className="muted py-12 text-center">음악을 불러오는 중입니다.</p> : songs.length ? <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">{songs.map((song) => <SongCard key={song.id} song={song}/>)}</div> : <p className="surface mt-6 py-14 text-center text-[#9aa0a1]">조건에 맞는 음악이 없어요. 검색 조건을 바꿔보세요.</p>}</main>
+  useEffect(() => {
+    const search = async () => {
+      if (!debouncedArtistQuery.trim()) {
+        setArtistResults([])
+        setArtistLoading(false)
+        return
+      }
+      setArtistLoading(true)
+      const { data } = await searchArtists(debouncedArtistQuery)
+      setArtistResults(data || [])
+      setArtistLoading(false)
+    }
+    search()
+  }, [debouncedArtistQuery])
+  const selectArtistFilter = (artist) => {
+    setFilters({ ...filters, artistId: artist.id })
+    setArtistQuery(artist.name)
+    setArtistResults([])
+  }
+  const clearArtistFilter = () => {
+    setFilters({ ...filters, artistId: '' })
+    setArtistQuery('')
+    setArtistResults([])
+  }
+  return <main className="page-shell py-8 sm:py-10"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow">MUSIC LIBRARY</p><h1 className="section-title mt-1">음악 탐색</h1></div><Link to="/songs/new"><Button><PlusCircle size={17} className="mr-1"/>음악 등록</Button></Link></div><div className="surface mt-6 grid gap-3 p-3 sm:grid-cols-3"><Input value={filters.query} onChange={(event) => setFilters({ ...filters, query: event.target.value })} placeholder="제목으로 검색"/><select aria-label="장르 필터" value={filters.genreId} onChange={(event) => setFilters({ ...filters, genreId: event.target.value })} className="min-h-11 rounded-xl border border-[#3a4244] bg-[#1b1f20] px-3 text-sm text-[#f5f6f4]"><option value="">전체 장르</option>{genres.map((genre) => <option key={genre.id} value={genre.id}>{genre.name}</option>)}</select><div className="relative"><Input value={artistQuery} onChange={(event) => { setArtistQuery(event.target.value); setFilters({ ...filters, artistId: '' }) }} placeholder="가수 검색"/>{artistQuery && <button type="button" aria-label="가수 필터 지우기" onClick={clearArtistFilter} className="absolute right-1 top-0 grid size-11 place-items-center text-[#8e9798] hover:text-white">×</button>}{artistQuery.trim() && !filters.artistId && <div className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-xl border border-[#3a4244] bg-[#171b1c] shadow-2xl">{artistLoading ? <p className="px-3 py-3 text-sm text-[#9aa0a1]">가수 검색 중...</p> : artistResults.length ? artistResults.map((artist) => <button key={artist.id} type="button" onClick={() => selectArtistFilter(artist)} className="block min-h-11 w-full border-b border-[#303637] px-3 text-left text-sm last:border-0 hover:bg-[#282e2f]">{artist.name}</button>) : <p className="px-3 py-3 text-sm text-[#9aa0a1]">일치하는 가수가 없습니다.</p>}</div>}</div></div>{loading ? <p className="muted py-12 text-center">음악을 불러오는 중입니다.</p> : songs.length ? <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">{songs.map((song) => <SongCard key={song.id} song={song}/>)}</div> : <p className="surface mt-6 py-14 text-center text-[#9aa0a1]">조건에 맞는 음악이 없어요. 검색 조건을 바꿔보세요.</p>}</main>
 }
 
 export function SongDetailPage() {
@@ -54,7 +81,7 @@ export function SongDetailPage() {
 }
 
 function SongSummary({ song, stat, reviewCount, own, onDelete }) {
-  return <section className="surface overflow-hidden"><div className="relative aspect-[16/9] bg-[#282e2f] sm:aspect-square">{song.album_image_url ? <img className="size-full object-cover" src={song.album_image_url} alt={`${song.title} 앨범 표지`}/> : <div className="grid size-full place-items-center text-[#8e9798]"><Music2 size={48}/></div>}<span className="absolute bottom-4 right-4 score-ring bg-[#111415]/90">{Number(stat.avg_rating || 0).toFixed(1)}</span></div><div className="p-5"><p className="eyebrow">{song.genres?.name || '장르 미정'}</p><h1 className="mt-2 text-2xl font-extrabold tracking-[-0.055em]">{song.title}</h1><p className="mt-1 text-base text-[#aeb4b5]">{song.artists?.name || '아티스트 미정'}</p><p className="mt-5 flex items-center gap-2 border-y border-[#353d3f] py-3 text-sm"><Star size={18} className="fill-[#25e39a] text-[#25e39a]"/><b>{Number(stat.avg_rating || 0).toFixed(1)}</b><span className="text-[#9aa0a1]">리뷰 {reviewCount}개</span></p><div className="mt-4 flex flex-wrap gap-2"><Link to={`/songs/${song.id}/reviews/new`}><Button>리뷰 쓰기</Button></Link>{own && <><Link to={`/songs/${song.id}/edit`}><Button variant="outline"><Pencil size={16} className="mr-1"/>수정</Button></Link><Button variant="danger" onClick={onDelete}><Trash2 size={16} className="mr-1"/>삭제</Button></>}</div></div></section>
+  return <section className="surface overflow-hidden"><div className="relative aspect-[16/9] bg-[#282e2f] sm:aspect-square">{song.album_image_url ? <img className="size-full object-cover" src={song.album_image_url} alt={`${song.title} 앨범 표지`}/> : <div className="grid size-full place-items-center text-[#8e9798]"><Music2 size={48}/></div>}<span className="absolute bottom-4 right-4 score-ring bg-[#111415]/90">{Number(stat.avg_rating || 0).toFixed(1)}</span></div><div className="p-5"><p className="eyebrow">{song.genres?.name || '장르 미정'}</p><h1 className="mt-2 text-2xl font-extrabold tracking-[-0.055em]">{song.title}</h1><p className="mt-1 text-base text-[#aeb4b5]">{getSongArtistNames(song)}</p><p className="mt-5 flex items-center gap-2 border-y border-[#353d3f] py-3 text-sm"><Star size={18} className="fill-[#25e39a] text-[#25e39a]"/><b>{Number(stat.avg_rating || 0).toFixed(1)}</b><span className="text-[#9aa0a1]">리뷰 {reviewCount}개</span></p><div className="mt-4 flex flex-wrap gap-2"><Link to={`/songs/${song.id}/reviews/new`}><Button>리뷰 쓰기</Button></Link>{own && <><Link to={`/songs/${song.id}/edit`}><Button variant="outline"><Pencil size={16} className="mr-1"/>수정</Button></Link><Button variant="danger" onClick={onDelete}><Trash2 size={16} className="mr-1"/>삭제</Button></>}</div></div></section>
 }
 
 function SongSectionNav({ hasVideo, reviewCount }) {
@@ -70,6 +97,6 @@ export function SongEditorPage({ edit = false }) {
   const [busy, setBusy] = useState(false)
   useEffect(() => { if (edit) getSong(id).then(({ data, error }) => { if (error) toast('음악 정보를 불러오지 못했습니다.', 'error'); else setSong(data) }) }, [edit, id])
   if (edit && !song) return <main className="page-shell py-16 text-center text-[#9aa0a1]">불러오는 중입니다.</main>
-  const submit = async (form) => { setBusy(true); const payload = { ...form, artist_id: form.artist_id || null, genre_id: form.genre_id || null, release_date: form.release_date || null, created_by: user.id }; const { data, error } = edit ? await updateSong(id, payload) : await createSong(payload); setBusy(false); if (error) return toast(error.message, 'error'); toast(edit ? '음악 정보를 수정했습니다.' : '음악을 등록했습니다.'); navigate(`/songs/${data.id || id}`) }
+  const submit = async (form) => { setBusy(true); const payload = { ...form, artist_id: form.artist_id || null, artist_ids: form.artist_ids || [], genre_id: form.genre_id || null, release_date: form.release_date || null, created_by: user.id }; const { data, error } = edit ? await updateSong(id, payload) : await createSong(payload); setBusy(false); if (error) return toast(error.message, 'error'); toast(edit ? '음악 정보를 수정했습니다.' : '음악을 등록했습니다.'); navigate(`/songs/${data.id || id}`) }
   return <main className="page-shell max-w-2xl py-10"><p className="eyebrow">CONTRIBUTE</p><h1 className="section-title mt-1">{edit ? '음악 수정' : '음악 등록'}</h1><p className="mt-2 text-sm text-[#9aa0a1]">정확한 정보를 입력하면 다른 사람이 음악을 더 쉽게 찾을 수 있어요.</p><div className="surface mt-6 p-5 sm:p-7"><SongForm initial={song || {}} onSubmit={submit} submitting={busy}/></div></main>
 }

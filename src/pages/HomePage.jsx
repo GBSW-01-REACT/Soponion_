@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, Music2, Plus, Search, Settings2, Sparkles, Star } from 'lucide-react'
-import { listSongs } from '../services/songs'
+import { getSongArtistNames, listSongs } from '../services/songs'
 import { useAuth } from '../hooks/useAuth'
 import { SongCard } from '../components/song/SongCard'
 
@@ -38,7 +38,7 @@ export function HomePage() {
         </aside>
       </div>
 
-      {spotlight && <Link to={`/songs/${spotlight.id}`} className="flex items-center gap-3 border-t border-white/10 bg-black/15 px-5 py-3 text-left transition hover:bg-black/25 sm:px-7"><span className="grid size-8 place-items-center rounded-lg bg-white/10"><Star size={15} className="fill-[#25e39a] text-[#25e39a]"/></span><span className="min-w-0 flex-1"><span className="block text-[10px] font-bold tracking-[.13em] text-[#aeb4b5]">SPOTLIGHT</span><span className="block truncate text-sm font-bold">{spotlight.title} · {spotlight.artists?.name || '아티스트 미정'}</span></span><ArrowUpRight size={17} className="text-[#b7c0c0]"/></Link>}
+      {spotlight && <Link to={`/songs/${spotlight.id}`} className="flex items-center gap-3 border-t border-white/10 bg-black/15 px-5 py-3 text-left transition hover:bg-black/25 sm:px-7"><span className="grid size-8 place-items-center rounded-lg bg-white/10"><Star size={15} className="fill-[#25e39a] text-[#25e39a]"/></span><span className="min-w-0 flex-1"><span className="block text-[10px] font-bold tracking-[.13em] text-[#aeb4b5]">SPOTLIGHT</span><span className="block truncate text-sm font-bold">{spotlight.title} · {getSongArtistNames(spotlight)}</span></span><ArrowUpRight size={17} className="text-[#b7c0c0]"/></Link>}
     </section>
 
     <section className="mt-10">
@@ -48,7 +48,7 @@ export function HomePage() {
 
     <section className="mt-10 grid gap-3 lg:grid-cols-[1.15fr_.85fr]">
       <Link to="/songs" className="group relative min-h-52 overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 transition hover:bg-[var(--surface-hover)]">
-        <p className="eyebrow">DISCOVER</p><h2 className="mt-3 max-w-sm text-2xl font-extrabold tracking-[-0.055em] text-[var(--text)]">제목, 장르, 아티스트로<br/>원하는 음악을 찾아보세요.</h2><span className="absolute bottom-5 right-5 grid size-11 place-items-center rounded-full bg-[var(--text)] text-[var(--surface)] transition group-hover:bg-[#0b9d65]"><Search size={20}/></span>
+        <p className="eyebrow">DISCOVER</p><h2 className="mt-3 max-w-sm text-2xl font-extrabold tracking-[-0.055em] text-[var(--text)]">제목, 장르, 가수로<br/>원하는 음악을 찾아보세요.</h2><span className="absolute bottom-5 right-5 grid size-11 place-items-center rounded-full bg-[var(--text)] text-[var(--surface)] transition group-hover:bg-[#0b9d65]"><Search size={20}/></span>
       </Link>
       <Link to="/songs/new" className="group relative min-h-52 overflow-hidden rounded-3xl border border-[#3b3152] bg-[radial-gradient(circle_at_80%_20%,rgba(134,76,255,.55),transparent_32%),#211c29] p-6 text-white transition hover:border-[#8066ae]">
         <p className="eyebrow text-[#c8b5ee]">CONTRIBUTE</p><h2 className="mt-3 max-w-sm text-2xl font-extrabold tracking-[-0.055em]">좋아하는 음악을<br/>새롭게 등록하세요.</h2><span className="absolute bottom-5 right-5 grid size-11 place-items-center rounded-full bg-white text-[#33234d] transition group-hover:bg-[#d3b6ff]"><Plus size={21}/></span>
