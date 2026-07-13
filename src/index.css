@@ -4,31 +4,111 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --page: #f4f5f2;
+  --surface: #ffffff;
+  --surface-raised: #eef0ed;
+  --surface-hover: #e4e8e4;
+  --border: #cbd1ce;
+  --text: #141918;
+  --text-soft: #56605e;
+  --text-muted: #727b79;
+  --accent: #0b9d65;
+  --accent-soft: #d9f7e8;
+  --focus-offset: #f4f5f2;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --page: #050505;
+  --surface: #1b1f20;
+  --surface-raised: #171b1c;
+  --surface-hover: #2a3031;
+  --border: #353d3f;
+  --text: #f5f6f4;
+  --text-soft: #c1c8c7;
+  --text-muted: #9aa0a1;
+  --accent: #25e39a;
+  --accent-soft: #143d2c;
+  --focus-offset: #050505;
+  color-scheme: dark;
+}
+
 @layer base {
-  * { @apply border-[#313638]; }
+  * { border-color: var(--border); }
 
   body {
-    @apply min-h-dvh bg-[#050505] text-[#f5f6f4] antialiased;
+    min-height: 100dvh;
+    background: var(--page);
+    color: var(--text);
     font-family: 'Noto Sans KR', sans-serif;
+    @apply antialiased transition-colors duration-200;
   }
 
   button, a { -webkit-tap-highlight-color: transparent; }
+  button, [role='button'] { touch-action: manipulation; }
 
   :focus-visible {
-    @apply outline-none ring-2 ring-[#25e39a] ring-offset-2 ring-offset-[#050505];
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--focus-offset);
   }
 
-  ::selection { @apply bg-[#25e39a] text-[#08110d]; }
+  ::selection { background: var(--accent); color: #08110d; }
 }
 
 @layer components {
   .page-shell { @apply mx-auto w-full max-w-[1440px] px-3 sm:px-5 lg:px-7; }
-  .surface { @apply rounded-2xl border border-[#313638] bg-[#1b1f20]; }
-  .section-title { @apply text-2xl font-extrabold tracking-[-0.055em] text-[#f5f6f4] sm:text-3xl; }
-  .muted { @apply text-sm text-[#9aa0a1]; }
-  .eyebrow { @apply text-[11px] font-bold tracking-[0.16em] text-[#8e9798]; }
-  .pod-tab { @apply inline-flex items-center rounded-full border border-[#353d3f] bg-[#171b1c] p-1 text-sm font-bold text-[#aeb4b5]; }
-  .pod-tab-link { @apply rounded-full px-3 py-1.5 transition hover:text-white; }
-  .pod-tab-link-active { @apply bg-[#3a4143] text-white shadow-sm; }
-  .score-ring { @apply grid size-12 place-items-center rounded-full border-4 border-[#25e39a] text-sm font-extrabold text-[#25e39a]; }
+  .surface { border: 1px solid var(--border); background: var(--surface); @apply rounded-2xl; }
+  .section-title { color: var(--text); @apply text-2xl font-extrabold tracking-[-0.055em] sm:text-3xl; }
+  .muted { color: var(--text-muted); @apply text-sm; }
+  .eyebrow { color: var(--text-muted); @apply text-[11px] font-bold tracking-[0.16em]; }
+  .pod-tab { border: 1px solid var(--border); background: var(--surface-raised); color: var(--text-soft); @apply inline-flex items-center rounded-full p-1 text-sm font-bold; }
+  .pod-tab-link { @apply rounded-full px-3 py-1.5 transition-colors duration-200; }
+  .pod-tab-link:hover { color: var(--text); background: var(--surface-hover); }
+  .pod-tab-link-active { background: var(--surface-hover); color: var(--text); @apply shadow-sm; }
+  .score-ring { border-color: var(--accent); color: var(--accent); @apply grid size-12 place-items-center rounded-full border-4 text-sm font-extrabold; }
+  .theme-icon-button { color: var(--text-soft); @apply grid size-10 place-items-center rounded-xl transition-colors duration-200; }
+  .theme-icon-button:hover { background: var(--surface-hover); color: var(--text); }
+  .theme-select { border: 1px solid var(--border); background: var(--surface); color: var(--text); @apply min-h-11 rounded-xl px-3 text-sm; }
+}
+
+/* 기존 컴포넌트의 다크 팔레트도 같은 토큰을 바라보게 해 모든 화면이 함께 전환됩니다. */
+:root:not([data-theme='dark']) .bg-\[\#1b1f20\],
+:root:not([data-theme='dark']) .bg-\[\#171b1c\],
+:root:not([data-theme='dark']) .bg-\[\#0c0e0f\],
+:root:not([data-theme='dark']) .bg-\[\#111415\],
+:root:not([data-theme='dark']) .bg-\[\#1a1e1f\],
+:root:not([data-theme='dark']) .bg-\[\#202526\],
+:root:not([data-theme='dark']) .bg-\[\#252a2b\],
+:root:not([data-theme='dark']) .bg-\[\#282e2f\] { background-color: var(--surface) !important; }
+
+:root:not([data-theme='dark']) .bg-\[\#111516\] { background-color: rgba(255, 255, 255, .94) !important; }
+:root:not([data-theme='dark']) .border-\[\#303637\],
+:root:not([data-theme='dark']) .border-\[\#313638\],
+:root:not([data-theme='dark']) .border-\[\#353d3f\],
+:root:not([data-theme='dark']) .border-\[\#363e40\],
+:root:not([data-theme='dark']) .border-\[\#3a4244\],
+:root:not([data-theme='dark']) .border-\[\#3b3152\],
+:root:not([data-theme='dark']) .border-\[\#454d4f\] { border-color: var(--border) !important; }
+
+:root:not([data-theme='dark']) .text-\[\#f5f6f4\],
+:root:not([data-theme='dark']) .text-\[\#f1f3ef\],
+:root:not([data-theme='dark']) .text-\[\#dce2e0\],
+:root:not([data-theme='dark']) .text-\[\#d7dddc\] { color: var(--text) !important; }
+
+:root:not([data-theme='dark']) .text-\[\#c1c8c7\],
+:root:not([data-theme='dark']) .text-\[\#b7c0c0\],
+:root:not([data-theme='dark']) .text-\[\#aeb4b5\],
+:root:not([data-theme='dark']) .text-\[\#9aa0a1\],
+:root:not([data-theme='dark']) .text-\[\#8e9798\] { color: var(--text-soft) !important; }
+
+:root:not([data-theme='dark']) .hover\:bg-\[\#252a2b\]:hover,
+:root:not([data-theme='dark']) .hover\:bg-\[\#282e2f\]:hover,
+:root:not([data-theme='dark']) .hover\:bg-\[\#2a3031\]:hover,
+:root:not([data-theme='dark']) .hover\:bg-\[\#2b3031\]:hover { background-color: var(--surface-hover) !important; }
+
+:root:not([data-theme='dark']) .hover\:text-white:hover { color: var(--text) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }

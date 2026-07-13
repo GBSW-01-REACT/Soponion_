@@ -2,9 +2,9 @@ import { cn } from '../../lib/utils'
 
 export function Button({ className, variant = 'default', type = 'button', ...props }) {
   const styles = {
-    default: 'border border-[#e7ece8] bg-[#f4f5f2] text-[#0a0b0b] hover:bg-[#25e39a] hover:border-[#25e39a]',
-    outline: 'border border-[#454d4f] bg-[#1b1f20] text-[#f5f6f4] hover:bg-[#2b3031] hover:border-[#667071]',
-    ghost: 'text-[#d7dddc] hover:bg-[#252a2b] hover:text-white',
+    default: 'border border-[var(--text)] bg-[var(--text)] text-[var(--surface)] hover:bg-[#0b9d65] hover:border-[#0b9d65]',
+    outline: 'border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-hover)]',
+    ghost: 'text-[var(--text-soft)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]',
     danger: 'border border-[#803e46] bg-[#4b2429] text-[#ffe8ea] hover:bg-[#673039]',
   }
 
