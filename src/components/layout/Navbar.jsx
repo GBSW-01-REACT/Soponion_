@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { LogOut, Moon, Music2, Settings2, Sun } from 'lucide-react'
+import { LogOut, Moon, Music2, Sun } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Button } from '../ui/Button'
@@ -22,13 +22,11 @@ export function Navbar() {
       <div className="pod-tab absolute left-1/2 hidden -translate-x-1/2 sm:flex">
         <NavLink end className={linkClass} to="/">홈</NavLink>
         <NavLink className={linkClass} to="/songs">탐색</NavLink>
-        <NavLink className={linkClass} to={user ? '/profile' : '/login'}>계정</NavLink>
       </div>
 
       <div className="ml-auto flex items-center gap-1">
         <button className="theme-icon-button" type="button" onClick={toggleTheme} aria-label={theme === 'dark' ? '화이트 모드로 변경' : '블랙 모드로 변경'} aria-pressed={theme === 'dark'} title={theme === 'dark' ? '화이트 모드' : '블랙 모드'}>{theme === 'dark' ? <Sun size={18}/> : <Moon size={18}/>}</button>
         {user ? <>
-          <Link aria-label="계정 설정" className="grid size-10 place-items-center rounded-xl text-[#d7dddc] hover:bg-[#252a2b] hover:text-white sm:hidden" to="/profile"><Settings2 size={18}/></Link>
           <Link aria-label="내 계정 설정" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-bold text-[#d7dddc] hover:bg-[#252a2b] hover:text-white" to="/profile"><Avatar size="sm" name={profile?.nickname || user.email?.split('@')[0] || '사용자'} src={profile?.profile_image_url}/><span className="hidden md:inline">{profile?.nickname || '계정 설정'}</span></Link>
           <button aria-label="로그아웃" onClick={logout} className="grid size-10 place-items-center rounded-xl text-[#9aa0a1] hover:bg-[#252a2b] hover:text-white"><LogOut size={17}/></button>
         </> : <>
