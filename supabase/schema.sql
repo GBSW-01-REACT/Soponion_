@@ -183,7 +183,7 @@ create trigger on_auth_user_created
 -- ---------- Seed genres ----------
 insert into public.genres (name) values
   ('발라드'), ('힙합'), ('댄스'), ('록'), ('R&B'),
-  ('인디'), ('트로트'), ('클래식'), ('재즈'), ('K-POP')
+  ('인디'), ('트로트'), ('클래식'), ('재즈'), ('K-POP'), ('POP')
 on conflict do nothing;
 
 -- =============================================================
