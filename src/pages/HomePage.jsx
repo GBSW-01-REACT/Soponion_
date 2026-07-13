@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, ChevronLeft, ChevronRight, Music2, Plus, Search, Star } from 'lucide-react'
+import { ArrowUpRight, ChevronLeft, ChevronRight, Clock3, Music2, Plus, Search, Star } from 'lucide-react'
 import { getSongArtistNames, listSongs } from '../services/songs'
-import { useAuth } from '../hooks/useAuth'
 import { SongCard } from '../components/song/SongCard'
 
+const getSongStat = (song) => {
+  const stat = song.song_rating_stats?.[0] || {}
+  return {
+    score: Number(stat.avg_rating || 0),
+    reviewCount: Number(stat.review_count || 0),
+  }
+}
+
 export function HomePage() {
-  const { user, profile } = useAuth()
   const [songs, setSongs] = useState([])
   const [loading, setLoading] = useState(true)
   const carouselRef = useRef(null)
@@ -20,7 +26,17 @@ export function HomePage() {
   }, [])
 
   const featured = songs.slice(0, 12)
-  const spotlight = featured[0]
+  const recommendedSongs = [...songs]
+    .sort((a, b) => {
+      const left = getSongStat(a)
+      const right = getSongStat(b)
+      if (right.score !== left.score) return right.score - left.score
+      if (right.reviewCount !== left.reviewCount) return right.reviewCount - left.reviewCount
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0)
+    })
+    .slice(0, 4)
+  const latestSongs = songs.slice(0, 4)
+  const spotlight = recommendedSongs[0] || featured[0]
   const updateCarouselState = () => {
     const carousel = carouselRef.current
     if (!carousel) return
@@ -51,27 +67,16 @@ export function HomePage() {
 
   return <main className="page-shell pb-16 pt-8 sm:pt-14">
     <section className="border-y border-[var(--text)] py-10 sm:py-14">
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_330px] lg:items-center">
-        <div>
-          <p className="eyebrow text-[#6d7f70]">MUSIC NOTES · SOPONION</p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-[-0.085em] text-[var(--text)] sm:text-6xl lg:text-7xl">음악을 듣고,<br/>생각을 나누는 곳.</h1>
-          <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--text-soft)]">새롭게 발견한 음악과 오래 기억하고 싶은 감상을 차분히 기록해보세요.</p>
-        </div>
-
-        <aside className="rounded-[2rem] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm">
-          <div className="mx-auto flex max-w-[180px] justify-center">
-            <img className="h-48 w-auto object-contain" src="/soponion-logo.png" alt="soponion 로고" width="180" height="246"/>
-          </div>
-          <div className="mt-5 border-t border-[var(--border)] pt-5">
-            <p className="eyebrow text-[#6d7f70]">{user ? 'MY MUSIC NOTE' : 'SOPONION GUIDE'}</p>
-            <h2 className="mt-3 text-xl font-extrabold leading-snug tracking-[-0.05em] text-[var(--text)]">{user ? `${profile?.nickname || '나'}님의 음악 기록` : '당신의 다음 음악을 찾아보세요.'}</h2>
-            <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{user ? '프로필과 내가 남긴 음악 감상을 이어서 관리할 수 있어요.' : '장르와 아티스트를 탐색하고, 다른 사람의 솔직한 한 줄 평을 읽어보세요.'}</p>
-            <Link to={user ? '/profile' : '/songs'} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-extrabold text-[#f07822] transition hover:text-[#c95b12]">
-              {user ? '계정 설정하기' : '음악 탐색하기'} <ArrowUpRight size={17}/>
-            </Link>
-          </div>
-        </aside>
+      <div className="max-w-4xl">
+        <p className="eyebrow text-[#6d7f70]">MUSIC NOTES · SOPONION</p>
+        <h1 className="mt-4 text-4xl font-extrabold leading-[1.08] tracking-[-0.085em] text-[var(--text)] sm:text-6xl lg:text-7xl">오늘 들을 음악을<br/>빠르게 골라보세요.</h1>
+        <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--text-soft)]">평점이 좋은 추천 음악과 방금 등록된 최신 음악을 한 화면에서 확인할 수 있어요.</p>
       </div>
+
+      {loading ? <p className="muted py-16 text-center">음악을 불러오는 중입니다.</p> : songs.length ? <div className="mt-10 grid gap-4 lg:grid-cols-2">
+        <MusicShowcase title="추천 음악" eyebrow="TOP RATED" icon={<Star size={18} className="fill-current"/>} songs={recommendedSongs} emptyText="아직 추천할 음악이 없어요."/>
+        <MusicShowcase title="최신 음악" eyebrow="JUST ADDED" icon={<Clock3 size={18}/>} songs={latestSongs} emptyText="아직 최신 음악이 없어요."/>
+      </div> : <EmptyMusic/>}
     </section>
 
     <section className="grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_330px]">
@@ -129,6 +134,60 @@ export function HomePage() {
       </aside>
     </section>
   </main>
+}
+
+function MusicShowcase({ title, eyebrow, icon, songs, emptyText }) {
+  const mainSong = songs[0]
+  const subSongs = songs.slice(1, 4)
+
+  return <section className="rounded-[2rem] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm sm:p-5">
+    <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] pb-4">
+      <div>
+        <p className="eyebrow text-[#6d7f70]">{eyebrow}</p>
+        <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.055em] text-[var(--text)]">{title}</h2>
+      </div>
+      <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[#fff0e5] text-[#f07822]">{icon}</span>
+    </div>
+
+    {mainSong ? <div className="mt-4 space-y-3">
+      <FeaturedMusicLink song={mainSong}/>
+      {subSongs.length ? <div className="grid gap-2">{subSongs.map((song) => <CompactMusicLink key={song.id} song={song}/>)}</div> : null}
+    </div> : <p className="muted py-10 text-center">{emptyText}</p>}
+  </section>
+}
+
+function FeaturedMusicLink({ song }) {
+  const { score, reviewCount } = getSongStat(song)
+
+  return <Link to={`/songs/${song.id}`} className="group grid gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)] p-3 transition hover:border-[#f07822] hover:bg-[var(--surface-hover)] sm:grid-cols-[150px_minmax(0,1fr)]">
+    <div className="aspect-square overflow-hidden rounded-xl bg-[#282e2f]">
+      {song.album_image_url ? <img src={song.album_image_url} alt={`${song.title} 앨범 표지`} className="size-full object-cover transition duration-300 group-hover:scale-[1.035]" loading="lazy"/> : <div className="grid size-full place-items-center text-[#8e9798]"><Music2 size={36}/></div>}
+    </div>
+    <div className="flex min-w-0 flex-col justify-between">
+      <div>
+        <p className="eyebrow text-[#6d7f70]">{song.genres?.name || '장르 미정'}</p>
+        <h3 className="mt-2 line-clamp-2 text-2xl font-extrabold leading-tight tracking-[-0.06em] text-[var(--text)]">{song.title}</h3>
+        <p className="mt-2 line-clamp-1 text-sm text-[var(--text-soft)]">{getSongArtistNames(song)}</p>
+      </div>
+      <p className="mt-4 flex items-center gap-1 text-sm font-bold text-[var(--text)]"><Star size={16} className="fill-[#25e39a] text-[#25e39a]"/>{score.toFixed(1)}<span className="text-[var(--text-muted)]">리뷰 {reviewCount}</span></p>
+    </div>
+  </Link>
+}
+
+function CompactMusicLink({ song }) {
+  const { score, reviewCount } = getSongStat(song)
+
+  return <Link to={`/songs/${song.id}`} className="group flex min-h-20 items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-2 transition hover:border-[#f07822] hover:bg-[var(--surface-hover)]">
+    <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-[#282e2f]">
+      {song.album_image_url ? <img src={song.album_image_url} alt={`${song.title} 앨범 표지`} className="size-full object-cover transition duration-300 group-hover:scale-[1.035]" loading="lazy"/> : <div className="grid size-full place-items-center text-[#8e9798]"><Music2 size={24}/></div>}
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="line-clamp-1 text-sm font-extrabold tracking-[-0.035em] text-[var(--text)]">{song.title}</p>
+      <p className="mt-1 line-clamp-1 text-xs text-[var(--text-soft)]">{getSongArtistNames(song)}</p>
+      <p className="mt-2 flex items-center gap-1 text-xs font-bold text-[var(--text)]"><Star size={13} className="fill-[#25e39a] text-[#25e39a]"/>{score.toFixed(1)}<span className="text-[var(--text-muted)]">리뷰 {reviewCount}</span></p>
+    </div>
+    <ArrowUpRight size={17} className="shrink-0 text-[var(--text-muted)] transition group-hover:text-[#f07822]"/>
+  </Link>
 }
 
 function EmptyMusic() {
