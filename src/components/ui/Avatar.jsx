@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { cn } from '../../lib/utils'
 
 const sizeClasses = {
@@ -12,6 +12,10 @@ export function Avatar({ name = '사용자', src, size = 'md', className, imageC
   const [failed, setFailed] = useState(false)
   const label = name.trim() || '사용자'
   const showImage = Boolean(src) && !failed
+
+  useEffect(() => {
+    setFailed(false)
+  }, [src])
 
   return <span className={cn('grid shrink-0 place-items-center overflow-hidden rounded-2xl bg-[#7d44e5] font-extrabold text-white', sizeClasses[size], className)} aria-label={`${label} 프로필 이미지`}>
     {showImage ? <img className={cn('size-full object-cover', imageClassName)} src={src} alt={`${label} 프로필 이미지`} onError={() => setFailed(true)}/> : label.slice(0, 1)}

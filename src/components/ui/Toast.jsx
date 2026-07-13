@@ -1,4 +1,35 @@
 import { createContext, useCallback, useContext, useState } from 'react'
+
 const ToastContext = createContext(null)
-export function ToastProvider({ children }) { const [items, setItems] = useState([]); const toast = useCallback((message, type = 'success') => { const id = crypto.randomUUID(); setItems((current) => [...current, { id, message, type }]); window.setTimeout(() => setItems((current) => current.filter((item) => item.id !== id)), 3500) }, []); return <ToastContext.Provider value={toast}>{children}<div className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-sm flex-col gap-2" aria-live="polite">{items.map((item) => <div key={item.id} className={`rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${item.type === 'error' ? 'bg-red-700 text-white' : 'bg-slate-900 text-white'}`}>{item.message}</div>)}</div></ToastContext.Provider> }
+
+export function ToastProvider({ children }) {
+  const [items, setItems] = useState([])
+
+  const toast = useCallback((message, type = 'success') => {
+    const id = crypto.randomUUID()
+
+    setItems((current) => {
+      const alreadyVisible = current.some((item) => item.message === message && item.type === type)
+      if (alreadyVisible) return current
+      return [...current, { id, message, type }]
+    })
+
+    window.setTimeout(() => {
+      setItems((current) => current.filter((item) => item.id !== id))
+    }, 3500)
+  }, [])
+
+  return <ToastContext.Provider value={toast}>
+    {children}
+    <div className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-sm flex-col gap-2" aria-live="polite">
+      {items.map((item) => <div
+        key={item.id}
+        className={`rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${item.type === 'error' ? 'bg-red-700 text-white' : 'bg-slate-900 text-white'}`}
+      >
+        {item.message}
+      </div>)}
+    </div>
+  </ToastContext.Provider>
+}
+
 export const useToast = () => useContext(ToastContext)
