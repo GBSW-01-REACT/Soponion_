@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { LogOut, Moon, Music2, Sun } from 'lucide-react'
+import { LogOut, Moon, Sun } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Button } from '../ui/Button'
@@ -15,8 +15,8 @@ export function Navbar() {
   return <header className="sticky top-0 z-40 border-b bg-[var(--surface)]/95 backdrop-blur-xl">
     <nav className="page-shell flex min-h-[4.75rem] items-center justify-between gap-3">
       <Link to="/" className="flex items-center gap-2 font-extrabold tracking-[-0.07em] text-[var(--text)]">
-        <span className="grid size-8 place-items-center rounded-xl bg-[#7d44e5] text-white"><Music2 size={17} strokeWidth={2.5}/></span>
-        <span className="text-lg">soponion</span>
+        <img className="size-10 object-contain" src="/soponion-mark.png" alt="" width="40" height="40"/>
+        <span className="text-lg text-[#f07822]">soponion</span>
       </Link>
 
       <div className="pod-tab absolute left-1/2 hidden -translate-x-1/2 sm:flex">

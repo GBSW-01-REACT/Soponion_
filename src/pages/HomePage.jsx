@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, Music2, Plus, Search, Settings2, Sparkles, Star } from 'lucide-react'
+import { ArrowUpRight, Music2, Plus, Search, Star } from 'lucide-react'
 import { getSongArtistNames, listSongs } from '../services/songs'
 import { useAuth } from '../hooks/useAuth'
 import { SongCard } from '../components/song/SongCard'
@@ -20,39 +20,67 @@ export function HomePage() {
   const featured = songs.slice(0, 6)
   const spotlight = featured[0]
 
-  return <main className="page-shell py-5 sm:py-7">
-    <section className="overflow-hidden rounded-3xl border border-[#2e3536] bg-[radial-gradient(circle_at_83%_5%,rgba(123,68,229,.3),transparent_28%),linear-gradient(135deg,#171b1c,#0d0f10_62%,#15111d)] text-white">
-      <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch lg:p-8">
-        <div className="flex min-h-[250px] flex-col justify-between">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/15 px-3 py-1.5 text-[11px] font-bold tracking-[.13em] text-[#c9cfce]"><Sparkles size={14} className="text-[#a778ff]"/> TODAY ON SOPONION</p>
-            <h1 className="mt-5 max-w-xl text-3xl font-extrabold leading-[1.12] tracking-[-0.07em] sm:text-5xl">좋아하는 음악을<br/>나만의 언어로 남기세요.</h1>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-[#b7c0c0]">별점과 리뷰, 대댓글로 오늘의 발견을 다른 사람과 편하게 나눌 수 있어요.</p>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-2"><Link to="/songs" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-extrabold text-[#0b0d0d] transition hover:bg-[#25e39a]"><Search size={17}/>음악 둘러보기</Link><Link to={user ? '/profile' : '/login'} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 text-sm font-bold text-white transition hover:bg-white/15"><Settings2 size={17}/>{user ? '계정 설정' : '로그인하기'}</Link></div>
+  return <main className="page-shell pb-16 pt-8 sm:pt-14">
+    <section className="border-y border-[var(--text)] py-10 sm:py-14">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_330px] lg:items-center">
+        <div>
+          <p className="eyebrow text-[#6d7f70]">MUSIC NOTES · SOPONION</p>
+          <h1 className="mt-4 max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-[-0.085em] text-[var(--text)] sm:text-6xl lg:text-7xl">음악을 듣고,<br/>생각을 나누는 곳.</h1>
+          <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--text-soft)]">새롭게 발견한 음악과 오래 기억하고 싶은 감상을 차분히 기록해보세요.</p>
         </div>
 
-        <aside className="rounded-2xl border border-white/15 bg-black/20 p-4 backdrop-blur-sm">
-          <div className="flex items-center justify-between"><p className="text-xs font-bold tracking-[.14em] text-[#aeb4b5]">{user ? 'MY MUSIC SPACE' : 'START YOUR SPACE'}</p><span className="grid size-8 place-items-center rounded-xl bg-[#7d44e5]"><Music2 size={17}/></span></div>
-          {user ? <><div className="mt-5 flex items-center gap-3"><span className="grid size-12 place-items-center overflow-hidden rounded-2xl bg-[#302046] text-lg font-extrabold">{profile?.profile_image_url ? <img className="size-full object-cover" src={profile.profile_image_url} alt=""/> : (profile?.nickname || '나').slice(0, 1)}</span><div><p className="font-extrabold">{profile?.nickname || '내 계정'}</p><p className="mt-1 text-xs text-[#aeb4b5]">프로필과 소개를 관리하세요</p></div></div><Link to="/profile" className="mt-5 flex min-h-11 items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 text-sm font-bold transition hover:bg-white/15"><span>계정 설정 열기</span><ArrowUpRight size={16}/></Link></> : <><p className="mt-5 text-xl font-extrabold tracking-[-.04em]">취향을 기록할<br/>나만의 공간을 만들어요.</p><p className="mt-3 text-sm leading-6 text-[#aeb4b5]">회원가입 후 음악 등록과 리뷰 작성에 참여할 수 있어요.</p><Link to="/signup" className="mt-5 flex min-h-11 items-center justify-between rounded-xl bg-[#25e39a] px-3 text-sm font-extrabold text-[#092116] transition hover:bg-[#6af0b8]"><span>회원가입</span><ArrowUpRight size={16}/></Link></>}
+        <aside className="rounded-[2rem] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm">
+          <div className="mx-auto flex max-w-[180px] justify-center">
+            <img className="h-48 w-auto object-contain" src="/soponion-logo.png" alt="soponion 로고" width="180" height="246"/>
+          </div>
+          <div className="mt-5 border-t border-[var(--border)] pt-5">
+            <p className="eyebrow text-[#6d7f70]">{user ? 'MY MUSIC NOTE' : 'SOPONION GUIDE'}</p>
+            <h2 className="mt-3 text-xl font-extrabold leading-snug tracking-[-0.05em] text-[var(--text)]">{user ? `${profile?.nickname || '나'}님의 음악 기록` : '당신의 다음 음악을 찾아보세요.'}</h2>
+            <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{user ? '프로필과 내가 남긴 음악 감상을 이어서 관리할 수 있어요.' : '장르와 아티스트를 탐색하고, 다른 사람의 솔직한 한 줄 평을 읽어보세요.'}</p>
+            <Link to={user ? '/profile' : '/songs'} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-extrabold text-[#f07822] transition hover:text-[#c95b12]">
+              {user ? '계정 설정하기' : '음악 탐색하기'} <ArrowUpRight size={17}/>
+            </Link>
+          </div>
         </aside>
       </div>
-
-      {spotlight && <Link to={`/songs/${spotlight.id}`} className="flex items-center gap-3 border-t border-white/10 bg-black/15 px-5 py-3 text-left transition hover:bg-black/25 sm:px-7"><span className="grid size-8 place-items-center rounded-lg bg-white/10"><Star size={15} className="fill-[#25e39a] text-[#25e39a]"/></span><span className="min-w-0 flex-1"><span className="block text-[10px] font-bold tracking-[.13em] text-[#aeb4b5]">SPOTLIGHT</span><span className="block truncate text-sm font-bold">{spotlight.title} · {getSongArtistNames(spotlight)}</span></span><ArrowUpRight size={17} className="text-[#b7c0c0]"/></Link>}
     </section>
 
-    <section className="mt-10">
-      <div className="mb-4 flex items-center justify-between gap-3"><div><p className="eyebrow">EXPLORE MUSIC</p><h2 className="section-title mt-1">새로 등록된 음악</h2></div><Link className="inline-flex items-center gap-1 text-sm font-bold text-[var(--text-soft)] hover:text-[#0b9d65]" to="/songs">모두 보기 <ArrowUpRight size={16}/></Link></div>
-      {loading ? <p className="muted py-10">음악을 불러오는 중입니다.</p> : featured.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">{featured.map((song) => <SongCard key={song.id} song={song}/>)}</div> : <EmptyMusic/>}
-    </section>
+    <section className="grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_330px]">
+      <div>
+        <div className="mb-5 flex items-end justify-between gap-3 border-b border-[var(--border)] pb-4">
+          <div>
+            <p className="eyebrow text-[#6d7f70]">NEW RELEASES</p>
+            <h2 className="section-title mt-1">새로 등록된 음악</h2>
+          </div>
+          <Link className="inline-flex items-center gap-1 text-sm font-bold text-[var(--text-soft)] hover:text-[#f07822]" to="/songs">전체 보기 <ArrowUpRight size={16}/></Link>
+        </div>
 
-    <section className="mt-10 grid gap-3 lg:grid-cols-[1.15fr_.85fr]">
-      <Link to="/songs" className="group relative min-h-52 overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 transition hover:bg-[var(--surface-hover)]">
-        <p className="eyebrow">DISCOVER</p><h2 className="mt-3 max-w-sm text-2xl font-extrabold tracking-[-0.055em] text-[var(--text)]">제목, 장르, 가수로<br/>원하는 음악을 찾아보세요.</h2><span className="absolute bottom-5 right-5 grid size-11 place-items-center rounded-full bg-[var(--text)] text-[var(--surface)] transition group-hover:bg-[#0b9d65]"><Search size={20}/></span>
-      </Link>
-      <Link to="/songs/new" className="group relative min-h-52 overflow-hidden rounded-3xl border border-[#3b3152] bg-[radial-gradient(circle_at_80%_20%,rgba(134,76,255,.55),transparent_32%),#211c29] p-6 text-white transition hover:border-[#8066ae]">
-        <p className="eyebrow text-[#c8b5ee]">CONTRIBUTE</p><h2 className="mt-3 max-w-sm text-2xl font-extrabold tracking-[-0.055em]">좋아하는 음악을<br/>새롭게 등록하세요.</h2><span className="absolute bottom-5 right-5 grid size-11 place-items-center rounded-full bg-white text-[#33234d] transition group-hover:bg-[#d3b6ff]"><Plus size={21}/></span>
-      </Link>
+        {loading ? <p className="muted py-16 text-center">음악을 불러오는 중입니다.</p> : featured.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">{featured.map((song) => <SongCard key={song.id} song={song}/>)}</div> : <EmptyMusic/>}
+      </div>
+
+      <aside className="space-y-4">
+        <Link to="/songs" className="group flex min-h-14 items-center justify-between border-y border-[var(--border)] py-4 text-sm font-extrabold text-[var(--text)] transition hover:text-[#f07822]">
+          <span className="inline-flex items-center gap-2"><Search size={18}/>음악 탐색하기</span>
+          <ArrowUpRight size={17} className="transition group-hover:translate-x-0.5"/>
+        </Link>
+
+        {spotlight && <Link to={`/songs/${spotlight.id}`} className="block border-y border-[var(--border)] py-6 transition hover:border-[#f07822]">
+          <p className="eyebrow text-[#6d7f70]">TODAY SPOTLIGHT</p>
+          <div className="mt-4 flex items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#fff0e5] text-[#f07822]"><Star size={18} className="fill-current"/></span>
+            <div className="min-w-0">
+              <p className="truncate text-lg font-extrabold tracking-[-0.04em] text-[var(--text)]">{spotlight.title}</p>
+              <p className="mt-1 truncate text-sm text-[var(--text-soft)]">{getSongArtistNames(spotlight)}</p>
+            </div>
+          </div>
+        </Link>}
+
+        <Link to="/songs/new" className="group relative block overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 transition hover:bg-[var(--surface-hover)]">
+          <p className="eyebrow text-[#6d7f70]">CONTRIBUTE</p>
+          <h2 className="mt-3 max-w-sm text-2xl font-extrabold tracking-[-0.055em] text-[var(--text)]">좋아하는 음악을<br/>새롭게 등록하세요.</h2>
+          <span className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#f07822] px-4 text-sm font-extrabold text-white transition group-hover:bg-[#d76517]"><Plus size={18}/>음악 등록</span>
+        </Link>
+      </aside>
     </section>
   </main>
 }
